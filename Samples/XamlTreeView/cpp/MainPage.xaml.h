@@ -20,6 +20,8 @@ namespace SDKTemplate
     public:
         MainPage();
 
+		void OnTreeViewDrop(TreeViewControl::TreeView ^ sender, TreeViewControl::TreeViewEventArgs ^ args);
+
     private:
         void SampleTreeView_ContainerContentChanging(Windows::UI::Xaml::Controls::ListViewBase^ sender, Windows::UI::Xaml::Controls::ContainerContentChangingEventArgs^ args);
         TreeViewControl::TreeNode^ CreateFileNode(Platform::String^ name);
