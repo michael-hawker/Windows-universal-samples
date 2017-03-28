@@ -26,6 +26,7 @@
     <ClInclude Include="GlyphConverter.h" />
     <ClInclude Include="BooleanToVisibilityConverter.h" />
     <ClInclude Include="FileSystemData.h" />
+    <ClInclude Include="VisualTreeUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\SharedContent\media\smalltile-sdk.png">
