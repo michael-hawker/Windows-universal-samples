@@ -45,6 +45,16 @@ namespace SDKTemplate
 			}
 		}
 
+		property Platform::Boolean IsDraggedOver
+		{
+			Platform::Boolean get() { return isDraggedOver; }
+			void set(Platform::Boolean value) {
+				if (isDraggedOver != value) {
+					isDraggedOver = value; OnPropertyChanged("IsDraggedOver");
+				}
+			}
+		}
+
         property bool IsFolder
         {
             Platform::Boolean get() { return isFolder; }
@@ -57,6 +67,7 @@ namespace SDKTemplate
     private:
         Platform::String^ name = nullptr;
 		Platform::Boolean isEditing = false;
+		Platform::Boolean isDraggedOver = false;
 		Platform::Boolean isFolder = false;
 		void OnPropertyChanged(Platform::String^ propertyName)
 		{

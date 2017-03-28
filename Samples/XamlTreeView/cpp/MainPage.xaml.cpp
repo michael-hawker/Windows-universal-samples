@@ -63,13 +63,17 @@ void MainPage::SampleTreeView_ContainerContentChanging(ListViewBase^ sender, Con
 				args->ItemContainer->Background = ref new SolidColorBrush(Windows::UI::Colors::Blue);
 			}
 
-            args->ItemContainer->AllowDrop = data->IsFolder;
+            //args->ItemContainer->AllowDrop = data->IsFolder;
         }
     }
 
+	args->ItemContainer->AllowDrop = true;
+
 	// Note: Would want to save these tokens to unload events later
 	auto keydownRegistrationToken = args->ItemContainer->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MainPage::ItemContainer_KeyDown);
-	auto doubleClickRegistrationToken = args->ItemContainer->DoubleTapped += ref new Windows::UI::Xaml::Input::DoubleTappedEventHandler(this, &MainPage::OnDoubleTapped);
+	auto doubleClickRegistrationToken = args->ItemContainer->DoubleTapped += ref new Windows::UI::Xaml::Input::DoubleTappedEventHandler(this, &MainPage::ItemContainer_OnDoubleTapped);
+	auto dragEnterRegistrationToken = args->ItemContainer->DragEnter += ref new Windows::UI::Xaml::DragEventHandler(this, &MainPage::ItemContainer_DragEnter);
+	auto dragLeaveRegistrationToken = args->ItemContainer->DragLeave += ref new Windows::UI::Xaml::DragEventHandler(this, &MainPage::ItemContainer_DragLeave);
 }
 
 TreeNode^ MainPage::CreateFileNode(String^ name)
@@ -121,6 +125,52 @@ void MainPage::UserControl_PointerEntered(Platform::Object^ sender, Windows::UI:
 void MainPage::UserControl_PointerExited(Platform::Object^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs^ e)
 {
 	VisualStateManager::GoToState(static_cast<Control^>(sender), "HoverInlineCommandsInvisible", true);
+}
+
+/**
+* The following two functions control behavior of showing an item that is currently being dragged over.
+*/
+void MainPage::ItemContainer_DragEnter(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	::OutputDebugString(L"Drag Enter ");
+	auto parent = dynamic_cast<TreeViewItem^>(sender);
+
+	if (parent != nullptr)
+	{
+		auto item = dynamic_cast<TreeNode^>(this->sampleTreeView->ItemFromContainer(parent));
+
+		auto node = dynamic_cast<FileSystemData^>(item->Data);
+		::OutputDebugString(L"Drag Enter ");
+		::OutputDebugString(node->Name->Data());
+		::OutputDebugString(L"\n");
+
+		node->IsDraggedOver = true;
+
+		// Auto-Expand, TODO: Start a timer and cancel it in the DragLeave
+		if (node->IsFolder && !item->IsExpanded)
+		{
+			item->IsExpanded = true;
+		}
+	}
+}
+
+// TODO: Do I need to add DragOver too in case DragEnter is missed?
+
+void MainPage::ItemContainer_DragLeave(Platform::Object^ sender, Windows::UI::Xaml::DragEventArgs^ e)
+{
+	auto parent = dynamic_cast<TreeViewItem^>(sender);
+
+	if (parent != nullptr)
+	{
+		auto item = dynamic_cast<TreeNode^>(this->sampleTreeView->ItemFromContainer(parent));
+
+		auto node = dynamic_cast<FileSystemData^>(item->Data);
+		::OutputDebugString(L"Drag Leave ");
+		::OutputDebugString(node->Name->Data());
+		::OutputDebugString(L"\n");
+
+		node->IsDraggedOver = false; // TODO: Need to set this to false OnDrop too.
+	}
 }
 
 /**
@@ -198,7 +248,7 @@ void MainPage::editorBox_KeyDown(Platform::Object^ sender, Windows::UI::Xaml::In
 /*
 * Allow double-clicking on entire row in order to enter edit mode (in case text is cleared)
 */
-void MainPage::OnDoubleTapped(Platform::Object ^sender, Windows::UI::Xaml::Input::DoubleTappedRoutedEventArgs ^e)
+void MainPage::ItemContainer_OnDoubleTapped(Platform::Object ^sender, Windows::UI::Xaml::Input::DoubleTappedRoutedEventArgs ^e)
 {
 	auto item = dynamic_cast<TreeNode^>(dynamic_cast<TreeViewItem^>(sender)->Content);
 

@@ -45,26 +45,26 @@
                     </VisualStateManager.VisualStateGroups>
 
                     <Grid
-                Visibility="{Binding HasItems, Converter={StaticResource BooleanToVisibilityConverter}}"
-                Margin="12,0,12,0">
+                        Visibility="{Binding HasItems, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="12,0,12,0">
 
-                        <TextBlock
-                    Text="&#xE70D;" 
-                    HorizontalAlignment="Stretch" 
-                    VerticalAlignment="Center"  
-                    FontSize="12"
-                    FontFamily="Segoe MDL2 Assets"
-                    Style="{ThemeResource BodyTextBlockStyle}"
-                    Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <TextBlock
+                                Text="&#xE70D;" 
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Center"  
+                                FontSize="12"
+                                FontFamily="Segoe MDL2 Assets"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                        <TextBlock
-                    Text="&#xE76C;" 
-                    HorizontalAlignment="Stretch" 
-                    VerticalAlignment="Center"  
-                    FontSize="12"
-                    FontFamily="Segoe MDL2 Assets"
-                    Style="{ThemeResource BodyTextBlockStyle}"
-                    Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                            <TextBlock
+                                Text="&#xE76C;" 
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Center"  
+                                FontSize="12"
+                                FontFamily="Segoe MDL2 Assets"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
                     </Grid>
 
                     <TextBox
@@ -91,6 +91,13 @@
                     Margin="0,0,12,0"
                     Grid.Column="2"
                     Glyph="&#xE00A;"/>
+
+                    <FontIcon 
+                    Visibility="{Binding Data.IsDraggedOver, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,12,0"
+                    Grid.Column="2"
+                    Foreground="Red"
+                    Glyph="&#xE00B;"/>
                 </Grid>
             </UserControl>
         </DataTemplate>
