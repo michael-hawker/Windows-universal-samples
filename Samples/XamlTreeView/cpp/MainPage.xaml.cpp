@@ -45,9 +45,42 @@ MainPage::MainPage()
     auto personalFolder = CreateFolderNode("Personal Documents");
     personalFolder->IsExpanded = true;
     personalFolder->Append(remodelFolder);
-    sampleTreeView->RootNode->Append(personalFolder);
+    sampleTreeView->RootNode->Append(personalFolder);	
+	sampleTreeView->TreeViewDrop += ref new TreeViewControl::TreeViewEventHandler(this, &SDKTemplate::MainPage::OnTreeViewDrop);
+	//sampleTreeView->TreeViewDrop += ref new TypedEventHandler<TreeViewControl::TreeView^, TreeViewControl::TreeViewEventArgs^>(this, &MainPage::OnTreeViewDrop);
 
     sampleTreeView->ContainerContentChanging += ref new TypedEventHandler<ListViewBase^, ContainerContentChangingEventArgs^>(this, &MainPage::SampleTreeView_ContainerContentChanging);
+}
+
+///  Custom drag/drop interception handling
+void MainPage::OnTreeViewDrop(TreeViewControl::TreeView^ sender, TreeViewControl::TreeViewEventArgs^ args)
+{
+	::OutputDebugString(L"Dropped between ");
+	if (args->ItemAbove)
+	{
+		auto nodeA = dynamic_cast<FileSystemData^>(args->ItemAbove->Data);
+		::OutputDebugString(nodeA->Name->Data());
+	}
+	else
+	{
+		::OutputDebugString(L"NONE");
+	}
+	::OutputDebugString(L" and ");
+	if (args->ItemBelow)
+	{
+		auto nodeB = dynamic_cast<FileSystemData^>(args->ItemBelow->Data);
+		::OutputDebugString(nodeB->Name->Data());
+	}
+	else
+	{
+		::OutputDebugString(L"NONE");
+	}
+	::OutputDebugString(L"\n");
+
+	// Prevents dropping an item between two others;
+	//  Note: parent node counts as an 'above' item
+	if (args->ItemAbove && args->ItemBelow)
+		args->IsHandled = true;
 }
 
 void MainPage::SampleTreeView_ContainerContentChanging(ListViewBase^ sender, ContainerContentChangingEventArgs^ args)

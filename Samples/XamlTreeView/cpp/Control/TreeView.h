@@ -4,15 +4,15 @@
 #include "TreeViewItem.h"
 
 namespace TreeViewControl {
-    public ref class TreeViewItemClickEventArgs sealed
+    public ref class TreeViewEventArgs sealed
     {
     public:
-        TreeViewItemClickEventArgs() {}
+        TreeViewEventArgs() {}
 
-        property Object^ ClickedItem
+        property Object^ Item
         {
-            Object^ get() { return clickedItem; };
-            void set(Object^ value) { clickedItem = value; };
+            Object^ get() { return item; };
+            void set(Object^ value) { item = value; };
         }
 
         property bool IsHandled
@@ -20,14 +20,30 @@ namespace TreeViewControl {
             bool get() { return isHandled; };
             void set(bool value) { isHandled = value; };
         }
+
+		property TreeNode^ ItemBelow
+		{
+			TreeNode^ get() { return itemBelow; };
+			void set(TreeNode^ value) { itemBelow = value; };
+		}
+
+		property TreeNode^ ItemAbove
+		{
+			TreeNode^ get() { return itemAbove; };
+			void set(TreeNode^ value) { itemAbove = value; };
+		}
+
     private:
-        Object^ clickedItem = nullptr;
+		Object^ item = nullptr;
         bool isHandled = false;
+		TreeNode^ itemBelow;
+		TreeNode^ itemAbove;
     };
+
 
     ref class TreeView;
     [Windows::Foundation::Metadata::WebHostHidden]
-    public delegate void TreeViewItemClickHandler(TreeView^ sender, TreeViewItemClickEventArgs^ args);
+    public delegate void TreeViewEventHandler(TreeView^ sender, TreeViewEventArgs^ args);
 
     [Windows::Foundation::Metadata::WebHostHidden]
     public ref class TreeView sealed : Windows::UI::Xaml::Controls::ListView
@@ -35,8 +51,10 @@ namespace TreeViewControl {
     public:
         TreeView();
 
-        //This event is used to expose an alternative to itemclick to developers.
-        event TreeViewItemClickHandler^ TreeViewItemClick;
+		//This event is used to expose an alternative to itemclick to developers.
+		event TreeViewEventHandler^ TreeViewItemClick;
+		//This event is used to expose an alternative to item Drop to developers.
+		event TreeViewEventHandler^ TreeViewDrop;
 
         //This RootNode property is used by the TreeView to handle additions into the TreeView and
         //accurate VectorChange with multiple 'root level nodes'. This node will not be placed

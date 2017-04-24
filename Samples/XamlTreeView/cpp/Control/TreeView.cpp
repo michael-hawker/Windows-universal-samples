@@ -5,186 +5,202 @@
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Interop;
 using namespace Windows::UI::Xaml::Controls;
+using namespace Windows::UI::Core;
 
 namespace TreeViewControl {
 
-    TreeView::TreeView()
-    {
-        flatViewModel = ref new ViewModel;
-        rootNode = ref new TreeNode();
+	TreeView::TreeView()
+	{
+		flatViewModel = ref new ViewModel;
+		rootNode = ref new TreeNode();
 
-        flatViewModel->ExpandNode(rootNode);
+		flatViewModel->ExpandNode(rootNode);
 
-        CanReorderItems = true;
-        AllowDrop = true;
-        CanDragItems = true;
+		CanReorderItems = true;
+		AllowDrop = true;
+		CanDragItems = true;
 
-        rootNode->VectorChanged += ref new BindableVectorChangedEventHandler(flatViewModel, &ViewModel::TreeNodeVectorChanged);
-        ItemClick += ref new Windows::UI::Xaml::Controls::ItemClickEventHandler(this, &TreeView::TreeView_OnItemClick);
-        DragItemsStarting += ref new Windows::UI::Xaml::Controls::DragItemsStartingEventHandler(this, &TreeView::TreeView_DragItemsStarting);
-        DragItemsCompleted += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Xaml::Controls::ListViewBase ^, Windows::UI::Xaml::Controls::DragItemsCompletedEventArgs ^>(this, &TreeView::TreeView_DragItemsCompleted);
-        ItemsSource = flatViewModel;
-    }
+		rootNode->VectorChanged += ref new BindableVectorChangedEventHandler(flatViewModel, &ViewModel::TreeNodeVectorChanged);
+		ItemClick += ref new Windows::UI::Xaml::Controls::ItemClickEventHandler(this, &TreeView::TreeView_OnItemClick);
+		DragItemsStarting += ref new Windows::UI::Xaml::Controls::DragItemsStartingEventHandler(this, &TreeView::TreeView_DragItemsStarting);
+		DragItemsCompleted += ref new Windows::Foundation::TypedEventHandler<Windows::UI::Xaml::Controls::ListViewBase ^, Windows::UI::Xaml::Controls::DragItemsCompletedEventArgs ^>(this, &TreeView::TreeView_DragItemsCompleted);
+		ItemsSource = flatViewModel;
+	}
 
-    void TreeView::TreeView_OnItemClick(Platform::Object^ sender, Windows::UI::Xaml::Controls::ItemClickEventArgs^ args)
-    {
-        TreeViewItemClickEventArgs^ treeViewArgs = ref new TreeViewItemClickEventArgs();
-        treeViewArgs->ClickedItem = args->ClickedItem;
+	void TreeView::TreeView_OnItemClick(Platform::Object^ sender, Windows::UI::Xaml::Controls::ItemClickEventArgs^ args)
+	{
+		TreeViewEventArgs^ treeViewArgs = ref new TreeViewEventArgs();
+		treeViewArgs->Item = args->ClickedItem;
 
-        TreeViewItemClick(this, treeViewArgs);
+		TreeViewItemClick(this, treeViewArgs);
 
-        if (!treeViewArgs->IsHandled)
-        {
-            TreeNode^ targetNode = (TreeNode^)args->ClickedItem;
-            if (targetNode->IsExpanded)
-            {
-                flatViewModel->CollapseNode(targetNode);
-            }
-            else
-            {
-                flatViewModel->ExpandNode(targetNode);                
-            }
-        }
-    }
+		if (!treeViewArgs->IsHandled)
+		{
+			TreeNode^ targetNode = (TreeNode^)args->ClickedItem;
+			if (targetNode->IsExpanded)
+			{
+				flatViewModel->CollapseNode(targetNode);
+			}
+			else
+			{
+				flatViewModel->ExpandNode(targetNode);
+			}
+		}
+	}
 
-    void TreeView::TreeView_DragItemsStarting(Platform::Object^ sender, Windows::UI::Xaml::Controls::DragItemsStartingEventArgs^ e)
-    {
-        draggedTreeViewItem = (TreeViewItem^)this->ContainerFromItem(e->Items->GetAt(0));
-    }
+	void TreeView::TreeView_DragItemsStarting(Platform::Object^ sender, Windows::UI::Xaml::Controls::DragItemsStartingEventArgs^ e)
+	{
+		draggedTreeViewItem = (TreeViewItem^)this->ContainerFromItem(e->Items->GetAt(0));
+	}
 
-    void TreeView::TreeView_DragItemsCompleted(Windows::UI::Xaml::Controls::ListViewBase^ sender, Windows::UI::Xaml::Controls::DragItemsCompletedEventArgs^ args)
-    {
-        draggedTreeViewItem = nullptr;
-    }
+	void TreeView::TreeView_DragItemsCompleted(Windows::UI::Xaml::Controls::ListViewBase^ sender, Windows::UI::Xaml::Controls::DragItemsCompletedEventArgs^ args)
+	{
+		draggedTreeViewItem = nullptr;
+	}
 
-    void TreeView::OnDrop(Windows::UI::Xaml::DragEventArgs^ e)
-    {
-        if (e->AcceptedOperation == Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move)
-        {
-            Panel^ panel = this->ItemsPanelRoot;
-            Windows::Foundation::Point point = e->GetPosition(panel);
+	void TreeView::OnDrop(Windows::UI::Xaml::DragEventArgs^ e)
+	{
+		TreeViewEventArgs^ treeViewArgs = ref new TreeViewEventArgs();
+		treeViewArgs->Item = e->Data;
 
-            int aboveIndex = -1;
-            int belowIndex = -1;
-            unsigned int relativeIndex;
+		if (e->AcceptedOperation == Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move)
+		{
+			Panel^ panel = this->ItemsPanelRoot;
+			Windows::Foundation::Point point = e->GetPosition(panel);
 
-            IInsertionPanel^ insertionPanel = (IInsertionPanel^)panel;
+			int aboveIndex = -1;
+			int belowIndex = -1;
+			unsigned int relativeIndex;
 
-            if (insertionPanel != nullptr)
-            {
-                insertionPanel->GetInsertionIndexes(point, &aboveIndex, &belowIndex);
+			IInsertionPanel^ insertionPanel = (IInsertionPanel^)panel;
 
-                TreeNode^ aboveNode = (TreeNode^)flatViewModel->GetAt(aboveIndex);
-                TreeNode^ belowNode = (TreeNode^)flatViewModel->GetAt(belowIndex);
-                TreeNode^ targetNode = (TreeNode^)this->ItemFromContainer(draggedTreeViewItem);
+			if (insertionPanel != nullptr)
+			{
+				insertionPanel->GetInsertionIndexes(point, &aboveIndex, &belowIndex);
 
-                //Between two items
-                if (aboveNode && belowNode)
-                {
-                    targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
-                    targetNode->ParentNode->RemoveAt(relativeIndex);
+				TreeNode^ aboveNode = (TreeNode^)flatViewModel->GetAt(aboveIndex);
+				TreeNode^ belowNode = (TreeNode^)flatViewModel->GetAt(belowIndex);
+				TreeNode^ targetNode = (TreeNode^)this->ItemFromContainer(draggedTreeViewItem);
 
-                    if (belowNode->ParentNode == aboveNode)
-                    {
-                        aboveNode->InsertAt(0, targetNode);
-                    }
-                    else
-                    {
-                        aboveNode->ParentNode->IndexOf(aboveNode, &relativeIndex);
-                        aboveNode->ParentNode->InsertAt(relativeIndex + 1, targetNode);
-                    }
-                }
-                //Bottom of the list
-                else if (aboveNode && !belowNode)
-                {
-                    targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
-                    targetNode->ParentNode->RemoveAt(relativeIndex);
+				treeViewArgs->ItemAbove = aboveNode;
+				treeViewArgs->ItemBelow = belowNode;
+				TreeViewDrop(this, treeViewArgs);
+				if (treeViewArgs->IsHandled)
+				{
+					// Rerenders the listview item order on a canceled drop event
+					ListViewBase::ItemsPanelRoot->InvalidateArrange();
+				}
+				else
+				{
 
-                    aboveNode->ParentNode->IndexOf(aboveNode, &relativeIndex);
-                    aboveNode->ParentNode->InsertAt(relativeIndex + 1, targetNode);
-                }
-                //Top of the list
-                else if (!aboveNode && belowNode)
-                {
-                    targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
-                    targetNode->ParentNode->RemoveAt(relativeIndex);
+					//Between two items
+					if (aboveNode && belowNode)
+					{
+						targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
+						targetNode->ParentNode->RemoveAt(relativeIndex);
 
-                    rootNode->InsertAt(0, targetNode);
-                }
-            }
-        }
+						if (belowNode->ParentNode == aboveNode)
+						{
+							aboveNode->InsertAt(0, targetNode);
+						}
+						else
+						{
+							aboveNode->ParentNode->IndexOf(aboveNode, &relativeIndex);
+							aboveNode->ParentNode->InsertAt(relativeIndex + 1, targetNode);
+						}
+					}
+					//Bottom of the list
+					else if (aboveNode && !belowNode)
+					{
+						targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
+						targetNode->ParentNode->RemoveAt(relativeIndex);
 
-        e->Handled = true;
-        ListViewBase::OnDrop(e);
-    }
+						aboveNode->ParentNode->IndexOf(aboveNode, &relativeIndex);
+						aboveNode->ParentNode->InsertAt(relativeIndex + 1, targetNode);
+					}
+					//Top of the list
+					else if (!aboveNode && belowNode)
+					{
+						targetNode->ParentNode->IndexOf(targetNode, &relativeIndex);
+						targetNode->ParentNode->RemoveAt(relativeIndex);
 
-    void TreeView::OnDragOver(Windows::UI::Xaml::DragEventArgs^ e)
-    {
-        Windows::ApplicationModel::DataTransfer::DataPackageOperation savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::None;
+						rootNode->InsertAt(0, targetNode);
+					}
+				}
+			}
+		}
 
-        e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::None;
+		e->Handled = true;
+		ListViewBase::OnDrop(e);
+	}
 
-        Panel^ panel = this->ItemsPanelRoot;
-        Windows::Foundation::Point point = e->GetPosition(panel);
+	void TreeView::OnDragOver(Windows::UI::Xaml::DragEventArgs^ e)
+	{
+		Windows::ApplicationModel::DataTransfer::DataPackageOperation savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::None;
 
-        int aboveIndex = -1;
-        int belowIndex = -1;
+		e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::None;
 
-        IInsertionPanel^ insertionPanel = (IInsertionPanel^)panel;
+		Panel^ panel = this->ItemsPanelRoot;
+		Windows::Foundation::Point point = e->GetPosition(panel);
 
-        if (insertionPanel != nullptr)
-        {
-            insertionPanel->GetInsertionIndexes(point, &aboveIndex, &belowIndex);
+		int aboveIndex = -1;
+		int belowIndex = -1;
 
-            if (aboveIndex > -1)
-            {
-                TreeNode^ aboveNode = (TreeNode^)flatViewModel->GetAt(aboveIndex);
-                TreeNode^ targetNode = (TreeNode^)this->ItemFromContainer(draggedTreeViewItem);
+		IInsertionPanel^ insertionPanel = (IInsertionPanel^)panel;
 
-                TreeNode^ ancestorNode = aboveNode;
-                while (ancestorNode != nullptr && ancestorNode != targetNode)
-                {
-                    ancestorNode = ancestorNode->ParentNode;
-                }
+		if (insertionPanel != nullptr)
+		{
+			insertionPanel->GetInsertionIndexes(point, &aboveIndex, &belowIndex);
 
-                if (ancestorNode == nullptr)
-                {
-                    savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
-                    e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
-                }
-            }
-            else
-            {
-                savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
-                e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
-            }
-        }
+			if (aboveIndex > -1)
+			{
+				TreeNode^ aboveNode = (TreeNode^)flatViewModel->GetAt(aboveIndex);
+				TreeNode^ targetNode = (TreeNode^)this->ItemFromContainer(draggedTreeViewItem);
+
+				TreeNode^ ancestorNode = aboveNode;
+				while (ancestorNode != nullptr && ancestorNode != targetNode)
+				{
+					ancestorNode = ancestorNode->ParentNode;
+				}
+
+				if (ancestorNode == nullptr)
+				{
+					savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
+					e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
+				}
+			}
+			else
+			{
+				savedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
+				e->AcceptedOperation = Windows::ApplicationModel::DataTransfer::DataPackageOperation::Move;
+			}
+		}
 
 		// Prevent Default Style of Separating Items to indicate drop location.
         //ListViewBase::OnDragOver(e);
-        e->AcceptedOperation = savedOperation;
-    }
+		e->AcceptedOperation = savedOperation;
+	}
 
-    void TreeView::ExpandNode(TreeNode^ targetNode)
-    {
-        flatViewModel->ExpandNode(targetNode);
-    }
+	void TreeView::ExpandNode(TreeNode^ targetNode)
+	{
+		flatViewModel->ExpandNode(targetNode);
+	}
 
-    void TreeView::CollapseNode(TreeNode^ targetNode)
-    {
-        flatViewModel->CollapseNode(targetNode);
-    }
+	void TreeView::CollapseNode(TreeNode^ targetNode)
+	{
+		flatViewModel->CollapseNode(targetNode);
+	}
 
-    void TreeView::PrepareContainerForItemOverride(DependencyObject^ element, Object^ item)
-    {
-        ((UIElement^)element)->AllowDrop = true;
+	void TreeView::PrepareContainerForItemOverride(DependencyObject^ element, Object^ item)
+	{
+		((UIElement^)element)->AllowDrop = true;
 
-        ListView::PrepareContainerForItemOverride(element, item);
-    }
+		ListView::PrepareContainerForItemOverride(element, item);
+	}
 
-    DependencyObject^ TreeView::GetContainerForItemOverride()
-    {
-        TreeViewItem^ targetItem = ref new TreeViewItem();
-        return (DependencyObject^)targetItem;
-    }
+	DependencyObject^ TreeView::GetContainerForItemOverride()
+	{
+		TreeViewItem^ targetItem = ref new TreeViewItem();
+		return (DependencyObject^)targetItem;
+	}
 }
