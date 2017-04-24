@@ -119,12 +119,21 @@
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       ItemTemplate="{StaticResource TreeViewItemDataTemplate}"
+                      DragItemsStarting="ListControl_DragItemsStarting"
                       Tapped="ListControl_Tapped">
             <tvs:TreeView.ItemContainerStyle>
                 <Style TargetType="tvs:TreeViewItem">
                     <Setter Property="Padding" Value="0"/>
                     <Setter Property="HorizontalAlignment" Value="Stretch"/>
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <!-- Reset our Control Template so we don't get a hover selection highlight -->
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </tvs:TreeView.ItemContainerStyle>
             <tvs:TreeView.ItemContainerTransitions>

@@ -60,14 +60,14 @@ void MainPage::SampleTreeView_ContainerContentChanging(ListViewBase^ sender, Con
         {
 			if (data->IsFolder)
 			{
+				// BUGBUG: Breaks when overriding the standard item template.
 				args->ItemContainer->Background = ref new SolidColorBrush(Windows::UI::Colors::Blue);
 			}
 
-            //args->ItemContainer->AllowDrop = data->IsFolder;
+			// Prevent creating sub-folders from items.
+            args->ItemContainer->AllowDrop = data->IsFolder; // Note: Prevents Drag Events Below
         }
     }
-
-	args->ItemContainer->AllowDrop = true;
 
 	// Note: Would want to save these tokens to unload events later
 	auto keydownRegistrationToken = args->ItemContainer->KeyDown += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &MainPage::ItemContainer_KeyDown);
@@ -262,4 +262,25 @@ void MainPage::ItemContainer_OnDoubleTapped(Platform::Object ^sender, Windows::U
 	auto textbox = dynamic_cast<TextBox^>(grid->Tag);
 	textbox->Focus(Windows::UI::Xaml::FocusState::Keyboard);
 	textbox->SelectAll();
+}
+
+void SDKTemplate::MainPage::ListControl_DragItemsStarting(Platform::Object ^ sender, Windows::UI::Xaml::Controls::DragItemsStartingEventArgs ^ e)
+{
+	auto item = dynamic_cast<TreeNode^>(e->Items->GetAt(0));
+
+	auto node = dynamic_cast<FileSystemData^>(item->Data);
+	::OutputDebugString(L"Drag Start on ");
+	::OutputDebugString(node->Name->Data());
+	::OutputDebugString(L"\n");
+
+	auto container = (TreeViewItem^)sampleTreeView->ContainerFromItem(e->Items->GetAt(0));
+
+	sampleTreeView->SelectedItem = nullptr;
+
+	// TreeViewItem, Need to get to UserControl to control VSM
+	auto control = FindVisualChild<UserControl^>(dynamic_cast<DependencyObject^>(container));
+	VisualStateManager::GoToState(control, "HoverInlineCommandsInvisible", true);
+ 
+	//container->Background = ref new SolidColorBrush(Windows::UI::Colors::Tomato);
+	container->Background = ref new SolidColorBrush(Windows::UI::Colors::Transparent);
 }

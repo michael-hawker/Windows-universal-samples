@@ -160,7 +160,8 @@ namespace TreeViewControl {
             }
         }
 
-        ListViewBase::OnDragOver(e);
+		// Prevent Default Style of Separating Items to indicate drop location.
+        //ListViewBase::OnDragOver(e);
         e->AcceptedOperation = savedOperation;
     }
 
