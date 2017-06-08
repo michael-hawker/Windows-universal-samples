@@ -104,6 +104,7 @@
     <Compile Include="..\..\..\SharedContent\cs\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="VisualTreeUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

@@ -146,6 +146,7 @@
     <ClInclude Include="MainPage.xaml.h">
       <DependentUpon>..\shared\MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="VisualTreeUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="..\shared\App.xaml">

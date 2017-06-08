@@ -13,53 +13,93 @@
         <local:GlyphConverter x:Key="folderGlyphConverter" ExpandedGlyph="&#xED44;" CollapsedGlyph="&#xED42;" />
         <local:GlyphConverter x:Key="folderOutlineGlyphConverter" ExpandedGlyph="&#xED43;" CollapsedGlyph="&#xED41;" />
         <local:GlyphConverter x:Key="expandCollapseGlyphConverter" ExpandedGlyph="&#xE70D;" CollapsedGlyph="&#xE76C;"/>
-        <local:BooleanToVisibilityConverter x:Key="booleanToVisibilityConverter"  />
-        <local:BooleanToVisibilityConverter x:Key="inverseBooleanToVisibilityConverter" IsInverse="True" />
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"  />
+        <local:BooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" IsInverse="True" />
 
         <DataTemplate x:Key="TreeViewItemDataTemplate">
-            <StackPanel Orientation="Horizontal" Height="40" Margin="{Binding Depth, Converter={StaticResource IntToIndConverter}}" AllowDrop="{Binding Data.IsFolder}">
-                <FontIcon x:Name="expandCollapseChevron" 
-                          Glyph="{Binding IsExpanded, Converter={StaticResource expandCollapseGlyphConverter}}"
-                          Visibility="{Binding Data.IsFolder, Converter={StaticResource booleanToVisibilityConverter}}"                           
-                          FontSize="12"
-                          Margin="12,8,12,8" 
-                          FontFamily="Segoe MDL2 Assets"                          
-                          />
-                <Grid>
-                    <FontIcon x:Name ="expandCollapseFolder" 
-                              Glyph="{Binding IsExpanded, Converter={StaticResource folderGlyphConverter}}" 
-                              Foreground="#FFFFE793" 
-                              FontSize="16" 
-                              Margin="0,8,12,8" 
-                              FontFamily="Segoe MDL2 Assets"
-                              Visibility="{Binding Data.IsFolder, Converter={StaticResource booleanToVisibilityConverter}}"
-                              />
+            <UserControl
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Stretch"
+            PointerEntered="UserControl_PointerEntered"
+            PointerExited="UserControl_PointerExited">
+                <!-- Note: Tag is used as easier to find inspection point for TextBox from above or below. -->
+                <Grid Height="44" Margin="{Binding Depth, Converter={StaticResource IntToIndConverter}}"
+                    Tag="{Binding ElementName=editorBox}"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <FontIcon x:Name ="nonFolderIcon" 
-                              Glyph="&#xE160;"
-                              Foreground="{ThemeResource SystemControlForegroundBaseLowBrush}"
-                              FontSize="12" 
-                              Margin="20,8,12,8" 
-                              FontFamily="Segoe MDL2 Assets"
-                              Visibility="{Binding Data.IsFolder, Converter={StaticResource inverseBooleanToVisibilityConverter}}"
-                              />
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup>
+                            <VisualState x:Name="HoverInlineCommandsInvisible"/>
+                            <VisualState x:Name="HoverInlineCommandsVisible">
+                                <VisualState.Setters>
+                                    <Setter Target="starIcon.(UIElement.Visibility)" Value="Visible"/>
+                                </VisualState.Setters>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
 
-                    <FontIcon x:Name ="expandCollapseFolderOutline" 
-                              Glyph="{Binding IsExpanded, Converter={StaticResource folderOutlineGlyphConverter}}" 
-                              Foreground="#FFECC849" 
-                              FontSize="16" 
-                              Margin="0,8,12,8" 
-                              FontFamily="Segoe MDL2 Assets"
-                              Visibility="{Binding Data.IsFolder, Converter={StaticResource booleanToVisibilityConverter}}"/>
+                    <Grid
+                        Visibility="{Binding HasItems, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="12,0,12,0">
+
+                            <TextBlock
+                                Text="&#xE70D;" 
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Center"  
+                                FontSize="12"
+                                FontFamily="Segoe MDL2 Assets"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                            <TextBlock
+                                Text="&#xE76C;" 
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Center"  
+                                FontSize="12"
+                                FontFamily="Segoe MDL2 Assets"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Visibility="{Binding IsExpanded, Mode=OneWay, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                    </Grid>
+
+                    <TextBox
+                    Grid.Column="1"
+                    x:Name="editorBox"
+                    KeyDown="editorBox_KeyDown"
+                    LostFocus="editorBox_LostFocus"
+                    Visibility="{Binding Data.IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Text="{Binding Data.Name, Mode=TwoWay}" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Center"/>
+
+                    <TextBlock
+                    Grid.Column="1"
+                    PointerReleased="TextBlock_PointerReleased"
+                    Visibility="{Binding Data.IsEditing, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                    Text="{Binding Data.Name}" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Center"/>
+
+                    <FontIcon 
+                    x:Name="starIcon"
+                    Visibility="Collapsed"
+                    Margin="0,0,12,0"
+                    Grid.Column="2"
+                    Glyph="&#xE00A;"/>
+
+                    <FontIcon 
+                    Visibility="{Binding Data.IsDraggedOver, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Margin="0,0,12,0"
+                    Grid.Column="2"
+                    Foreground="Red"
+                    Glyph="&#xE00B;"/>
                 </Grid>
-
-                <TextBlock Text="{Binding Data.Name}" 
-                           HorizontalAlignment="Stretch" 
-                           VerticalAlignment="Center"  
-                           FontWeight="Medium"
-                           FontFamily="Segoe MDL2 Assests"                           
-                           Style="{ThemeResource BodyTextBlockStyle}"/>
-            </StackPanel>
+            </UserControl>
         </DataTemplate>
     </Page.Resources>
 
@@ -78,7 +118,24 @@
                       Width="345" Height="500"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"
-                      ItemTemplate="{StaticResource TreeViewItemDataTemplate}">
+                      ItemTemplate="{StaticResource TreeViewItemDataTemplate}"
+                      DragItemsStarting="ListControl_DragItemsStarting"
+                      Tapped="ListControl_Tapped">
+            <tvs:TreeView.ItemContainerStyle>
+                <Style TargetType="tvs:TreeViewItem">
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Template">
+                        <!-- Reset our Control Template so we don't get a hover selection highlight -->
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </tvs:TreeView.ItemContainerStyle>
             <tvs:TreeView.ItemContainerTransitions>
                 <TransitionCollection>
                     <ContentThemeTransition />
